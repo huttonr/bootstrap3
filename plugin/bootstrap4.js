@@ -33,6 +33,9 @@ var mixinFilesInstruction = '// This file is not editable.\n' +
 
 
 
+
+
+
 // Register the compiler for the bootstrap-settings json file
 Plugin.registerCompiler({
   extensions: [],
@@ -46,13 +49,9 @@ function BootstrapCompiler() {}
 
 // Actual processing of file (bootstrap-settings json)
 BootstrapCompiler.prototype.processFilesForTarget = function (files) {
-  console.log('\n');
-
   var settingsFile;
-  //var variablesFile;
-  //var mixinsFile;
 
-  // Loop through and figure out which file is which
+  // Loop through and find the settings file
   _.each(files, function (file) {
     var fn = path.basename(file.getDisplayPath());
     if (fn === bootstrapSettings) {
@@ -61,17 +60,6 @@ BootstrapCompiler.prototype.processFilesForTarget = function (files) {
 
       settingsFile = file;
     }
-    // else if (fn === bootstrapVariables) {
-    //   if (variablesFile)
-    //     throw new Error('You cannot have more than one ' + bootstrapVariables + ' in your Meteor project.');
-
-    //   variablesFile = file;
-    // }
-    // else if (fn === bootstrapMixins) {
-    //   // Note: Doesn't matter if this one is in the project more than once
-
-    //   mixinsFile = file;
-    // }
   });
 
   if (settingsFile) {
@@ -285,12 +273,10 @@ BootstrapCompiler.prototype.processFilesForTarget = function (files) {
     }).join(',\n');
 
 
-    // Replace the json in
+    // Insert the json modules into the template settings file
     src = src.replace(/\n\s*\/\*SCSS_MODULES\*\//, '\n' + scssJson);
     src = src.replace(/\n\s*\/\*JS_MODULES\*\//, '\n' + jsJson);
 
     fs.writeFileSync(path.join('.', bootstrapSettings), src);
   }
-
-  console.log('\n');
 };
