@@ -1,0 +1,21 @@
+{
+  "scss": {
+    "enableFlex": true,
+
+    "customVariables": false,
+
+    "exposeMixins": false,
+
+    "modules": {
+      /*SCSS_MODULES*/
+    }
+  },
+
+  "javascript": {
+    "namespace": "Bootstrap",
+
+    "modules": {
+      /*JS_MODULES*/
+    }
+  }
+}
