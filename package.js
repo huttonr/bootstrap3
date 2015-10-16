@@ -36,3 +36,6 @@ Package.registerBuildPlugin({
 //   api.use('huttonr:bootstrap4');
 //   api.addFiles('bootstrap4-tests.js');
 // });
+
+
+// find . -not -path '*/\.*' -type f -exec echo '"{}"' \; | grep -v '^$' | paste -s -d ","
