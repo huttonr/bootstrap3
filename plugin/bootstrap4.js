@@ -3,13 +3,13 @@ var Sass = Npm.require('node-sass');
 var fs = Plugin.fs;
 var path = Plugin.path;
 
-
-
 // Paths and filenames
+var pluginName = 'huttonr:bootstrap4';  // It's dumb that this has to be hardcoded, but it's better than a hacky solution
 var basePath = path.join('packages', 'bootstrap4');
-var defaultsPath = path.join(basePath, 'assets', 'defaults');
-var scssPath = path.join(basePath, 'assets', 'bootstrap', 'scss');
-var jsPath = path.join(basePath, 'assets', 'bootstrap', 'js', 'dist');
+var assetsPath = path.join('.meteor', 'local', 'build', 'programs', 'server', 'assets', 'packages', pluginName.replace(':', '_'));
+var defaultsPath = path.join(assetsPath, 'assets', 'defaults');
+var scssPath = path.join(assetsPath, 'assets', 'bootstrap', 'scss');
+var jsPath = path.join(assetsPath, 'assets', 'bootstrap', 'js', 'dist');
 var jsLoadFirst = [
   'util.js',
   'tooltip.js'
@@ -47,8 +47,13 @@ Plugin.registerCompiler({
 function BootstrapCompiler() {}
 
 
+console.log(this);
+
 // Actual processing of file (bootstrap-settings json)
 BootstrapCompiler.prototype.processFilesForTarget = function (files) {
+  //console.log(Plugin);
+  //throw new Error("KILL");
+
   var settingsFile;
 
   // Loop through and find the settings file
