@@ -1,6 +1,5 @@
 var fs = Npm.require('fs');
 var path = Npm.require('path');
-//var finder = Npm.require('findit').find(process.cwd());
 
 Package.describe({
   name: 'huttonr:bootstrap4',
@@ -15,6 +14,8 @@ Package.onUse(function(api) {
   api.use('ecmascript');
   api.use('isobuild:compiler-plugin@1.0.0');
   api.use('fourseven:scss');
+
+
 });
 
 Package.registerBuildPlugin({
@@ -30,12 +31,4 @@ Package.registerBuildPlugin({
   }
 });
 
-// Package.onTest(function(api) {
-//   api.use('ecmascript');
-//   api.use('tinytest');
-//   api.use('huttonr:bootstrap4');
-//   api.addFiles('bootstrap4-tests.js');
-// });
-
-
-// find . -not -path '*/\.*' -type f -exec echo '"{}"' \; | grep -v '^$' | paste -s -d ","
+assetsList = [];
