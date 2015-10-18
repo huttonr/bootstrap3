@@ -265,31 +265,6 @@ class BootstrapCompiler {
           jsModules.unshift(jsModules.splice(index, 1)[0]);
       });
 
-/*
-      // Get source from each bootstrap js file and compile it into one file
-      let src = '';
-      _.each(jsModules, function (moduleFn) {
-        src += fs.readFileSync(path.join(jsPath, moduleFn)).toString() + '\n';
-      });
-
-
-      // Build the exports
-      let jsSuffix = '\n';
-      if (settings.javascript.namespace !== false) {
-        jsSuffix += 'if (typeof window.' + settings.javascript.namespace + ' === "undefined") ' +
-                    'window.' + settings.javascript.namespace + ' = {};\n\n';
-
-        let re = /let\s+(.+)\s+\=\s+\(\s*function\s*\(\s*\$\s*\)\s\{/g
-        let found;
-        while (found = re.exec(src)) {
-          if (found[1])
-            jsSuffix += 'window.' + settings.javascript.namespace + '.' + found[1] + ' = ' + found[1] + ';\n';
-        }
-      }
-
-      src = 'if (Meteor.isClient) {\n' + src + jsSuffix + '}';
-*/
-
 
       // Get source from each bootstrap js file and compile it into one file
       let src = '';
@@ -321,21 +296,19 @@ class BootstrapCompiler {
 
       // Compile the ES6
       let babelOptions = Babel.getDefaultOptions();
+      let filename = path.join('client', 'lib', 'bootstrap', 'bootstrap.generated.js');
       babelOptions.sourceMap = true;
-      babelOptions.filename = path.join('client', 'lib', 'bootstrap', 'bootstrap.generated.js');
-      babelOptions.sourceFileName = path.join('/', babelOptions.filename);
-      babelOptions.sourceMapName = path.join('/', babelOptions.filename + '.map');
+      babelOptions.filename = filename;
+      babelOptions.sourceFileName = path.join('/', filename);
+      babelOptions.sourceMapName = path.join('/', filename + '.map');
       src = Babel.compile(src, babelOptions).code;
 
 
       // Add the javascript
       settingsFile.addJavaScript({
         data: src,
-        path: babelOptions.filename
+        path: filename
       });
-    }
-    else {
-      console.warn("\n\nCreate a file named 'bootstrap-settings.json' to enable Bootstrap.\n\n");
     }
   }
 };
