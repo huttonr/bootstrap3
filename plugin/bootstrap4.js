@@ -1,3 +1,6 @@
+// TODO: source maps, better first-run asset access
+
+
 // npm
 const fs =    Plugin.fs;
 const path =  Plugin.path;
@@ -5,12 +8,13 @@ const Sass =  Npm.require('node-sass');
 
 
 // Paths and filenames
-const pluginName =    'huttonr:bootstrap4';  // It's dumb that this has to be hardcoded, but it's better than a hacky solution
+const pluginName =    'huttonr:bootstrap4';  // Dumb that this has to be hardcoded, but it's better than a hacky solution
 const basePath =      path.join('packages', 'bootstrap4');
-const assetsPath =    path.join('.meteor', 'local', 'build', 'programs', 'server', 'assets', 'packages', pluginName.replace(':', '_'));
+const assetsPath =    path.join('.meteor', 'local', 'build', 'programs', 'server', 'assets',
+                                'packages', pluginName.replace(':', '_'));
 const defaultsPath =  path.join(assetsPath, 'assets', 'defaults');
 const scssPath =      path.join(assetsPath, 'assets', 'bootstrap', 'scss');
-const jsPath =        path.join(assetsPath, 'assets', 'bootstrap', 'js', 'dist');
+const jsPath =        path.join(assetsPath, 'assets', 'bootstrap', 'js', 'src');
 
 const jsLoadFirst = [ // Specifies which js modules should be loaded first due to other js modules depending on them
   'util.js',
@@ -52,7 +56,7 @@ class BootstrapCompiler {
     let settingsFile;
 
     // Loop through and find the settings file
-    _.each(filesFound, function (file) {
+    _.each(filesFound, file => {
       let fn = path.basename(file.getDisplayPath());
       if (fn === bootstrapSettings) {
         if (settingsFile)
@@ -66,8 +70,11 @@ class BootstrapCompiler {
       // (1) Get the bootstrap-settings json
 
 
-      // Flag the settings file as having been found so a warning isn't displayed later
-      //fs.writeFileSync(path.join(assetsPath, 'found-settings-file'), 'true');
+      // Flag the settings file as being present so a warning isn't displayed later
+      settingsFile.addJavaScript({
+        data: 'this._bootstrapSettingsFileLoaded = true;\n',
+        path: path.join('client', 'lib', 'settings-file-checked.generated.js')
+      });
 
 
       // Get the settings file dir
@@ -120,9 +127,8 @@ class BootstrapCompiler {
 
 
         // Create js modules json
-        let jsJson = _.map(jsModules, function (name) {
-          return jsWhitespace + '"' + name.match(/(.*)\.js/i)[1] + '": true';
-        }).join(',\n');
+        let jsJson = _.map(jsModules, name => `${ jsWhitespace }"${ name.match(/(.*)\.js/i)[1] }": true`)
+                      .join(',\n');
 
 
         // Insert the json modules into the template settings file
@@ -179,9 +185,7 @@ class BootstrapCompiler {
 
 
       // Filter the modules to include only those enabled in the bootstrap-settings json
-      scssModules = _.filter(scssModules, function (moduleName) {
-        return settings.scss.modules[moduleName];
-      });
+      scssModules = _.filter(scssModules, moduleName => settings.scss.modules[moduleName]);
 
 
       // Reinsert default variables and mixins modules
@@ -209,7 +213,7 @@ class BootstrapCompiler {
         // Generate the mixins file because it doesn't exist
         let src = fs.readFileSync(path.join(scssPath, '_mixins.scss')).toString();
         src = src.substr(Math.max(src.indexOf('\n\n'), 0));
-        src = src.replace(/\@import\s+\"mixins\/(.+)\"\;?/g, function (match, mixin) {
+        src = src.replace(/\@import\s+\"mixins\/(.+)\"\;?/g, (match, mixin) => {
           let fullPath = path.join(scssPath, 'mixins', '_' + mixin + '.scss');
 
           return fs.readFileSync(fullPath).toString();
@@ -227,15 +231,17 @@ class BootstrapCompiler {
 
       // Render the scss into css
       let rendered = Sass.renderSync({
-        data: scssPrefix + _.map(scssModules, function (fn) { return '@import "' + fn + '";'; }).join('\n'),
-        includePaths: [scssPath, settingsPathDir]
+        data: scssPrefix + _.map(scssModules, fn => { return '@import "' + fn + '";'; }).join('\n'),
+        includePaths: [scssPath, settingsPathDir]//,
+        //sourceMap: true
       });
 
 
       // Add the newly generated css as a stylesheet
       settingsFile.addStylesheet({
         data: rendered.css.toString(),
-        path: path.join('client', 'stylesheets', 'bootstrap', 'bootstrap.generated.css')
+        path: path.join('client', 'stylesheets', 'bootstrap', 'bootstrap.generated.css')//,
+        //sourceMap: rendered.map.toString()
       });
 
 
@@ -247,21 +253,19 @@ class BootstrapCompiler {
 
 
       // Filter the modules to include only those enabled in the bootstrap-settings json
-      jsModules = _.filter(jsModules, function (moduleName) {
-        return settings.javascript.modules[moduleName.match(/(.*)\.js/i)[1]];
-      });
+      jsModules = _.filter(jsModules, moduleName => settings.javascript.modules[moduleName.match(/(.*)\.js/i)[1]]);
 
 
       // Push 'load first' modules to top of list
       let jsReversedLoadFirst = _.clone(jsLoadFirst).reverse();
-      _.each(jsReversedLoadFirst, function (fn) {
+      _.each(jsReversedLoadFirst, fn => {
         let index = jsModules.indexOf(fn);
 
         if (index > -1)
           jsModules.unshift(jsModules.splice(index, 1)[0]);
       });
 
-
+/*
       // Get source from each bootstrap js file and compile it into one file
       let src = '';
       _.each(jsModules, function (moduleFn) {
@@ -284,16 +288,54 @@ class BootstrapCompiler {
       }
 
       src = 'if (Meteor.isClient) {\n' + src + jsSuffix + '}';
+*/
 
 
-      // Add the javascript (adding suffix code which contains the generated exports)
+      // Get source from each bootstrap js file and compile it into one file
+      let src = '';
+      _.each(jsModules, moduleFn => {
+        src += fs.readFileSync(path.join(jsPath, moduleFn)).toString() + '\n';
+      });
+
+
+      // Kill the imports
+      src = src.replace(/import\s+(?:\S+)\s+from\s+\'.+\'/g, '');
+
+
+      // Build the exports
+      if (settings.javascript.namespace !== false) {
+        src = `if (typeof window. ${ settings.javascript.namespace } === "undefined")
+                window. ${ settings.javascript.namespace } = {};
+                ${ src }`;
+
+        src = src.replace(
+          /export\s+default\s+(\S+)/g,
+          `window.${ settings.javascript.namespace }.$1 = $1`
+        );
+      }
+
+      src = `if (Meteor.isClient) {
+              ${ src }
+            }`;
+
+
+      // Compile the ES6
+      let babelOptions = Babel.getDefaultOptions();
+      babelOptions.sourceMap = true;
+      babelOptions.filename = path.join('client', 'lib', 'bootstrap', 'bootstrap.generated.js');
+      babelOptions.sourceFileName = path.join('/', babelOptions.filename);
+      babelOptions.sourceMapName = path.join('/', babelOptions.filename + '.map');
+      src = Babel.compile(src, babelOptions).code;
+
+
+      // Add the javascript
       settingsFile.addJavaScript({
         data: src,
-        path: path.join('client', 'lib', 'bootstrap', 'bootstrap.generated.js')
+        path: babelOptions.filename
       });
     }
     else {
-      console.warn('\n\nCreate a file named bootstrap-settings.json to enable Bootstrap.\n\n');
+      console.warn("\n\nCreate a file named 'bootstrap-settings.json' to enable Bootstrap.\n\n");
     }
   }
 };
