@@ -47,8 +47,6 @@ Plugin.registerCompiler({
 function BootstrapCompiler() {}
 
 
-console.log(this);
-
 // Actual processing of file (bootstrap-settings json)
 BootstrapCompiler.prototype.processFilesForTarget = function (files) {
   //console.log(Plugin);
