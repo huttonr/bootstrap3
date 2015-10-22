@@ -8,13 +8,14 @@ const Sass =  Npm.require('node-sass');
 
 
 // Paths and filenames
-const pluginName =    'huttonr:bootstrap4';  // Dumb that this has to be hardcoded, but it's better than a hacky solution
-const basePath =      path.join('packages', 'bootstrap4');
-const assetsPath =    path.join('.meteor', 'local', 'build', 'programs', 'server', 'assets',
-                                'packages', pluginName.replace(':', '_'));
-const defaultsPath =  path.join(assetsPath, 'assets', 'defaults');
-const scssPath =      path.join(assetsPath, 'assets', 'bootstrap', 'scss');
-const jsPath =        path.join(assetsPath, 'assets', 'bootstrap', 'js', 'src');
+//const assetsPackageName = 'huttonr:bootstrap4-assets';
+//const basePath =          path.join('packages', 'bootstrap4');
+//const assetsPath =        path.join('.meteor', 'local', 'build', 'programs', 'server', 'assets',
+//                                    'packages', assetsPackageName.replace(':', '_'));
+const assetsPath =        path.join('assets');
+const defaultsPath =      path.join(assetsPath, 'defaults');
+const scssPath =          path.join(assetsPath, 'bootstrap', 'scss');
+const jsPath =            path.join(assetsPath, 'bootstrap', 'js', 'src');
 
 const jsLoadFirst = [ // Specifies which js modules should be loaded first due to other js modules depending on them
   'util.js',
@@ -40,6 +41,8 @@ const mixinFilesInstruction =
 
 
 
+
+const getAsset = _bootstrapGetAsset;
 
 
 // Register the compiler for the bootstrap-settings json file
@@ -89,7 +92,7 @@ class BootstrapCompiler {
         // Create the settings json file because it doesn't exist
 
         // Load in the template settings file
-        let src = fs.readFileSync(path.join(defaultsPath, 'bootstrap-settings.default.json')).toString();
+        let src = getAsset(path.join(defaultsPath, 'bootstrap-settings.default.json'));
 
 
         // Get the default trailing whitespace
@@ -98,7 +101,7 @@ class BootstrapCompiler {
 
 
         // Get all scss modules specified in default bootstrap.scss
-        let bootstrapDefaultScss = fs.readFileSync(path.join(scssPath, 'bootstrap.scss'));
+        let bootstrapDefaultScss = getAsset(path.join(scssPath, 'bootstrap.scss'));
         let scssModules = [];
         let re = /\@import\s+\"(.+)\"\;?/g;
         let found;
@@ -123,7 +126,7 @@ class BootstrapCompiler {
 
 
         // Get all js modules
-        let jsModules = fs.readdirSync(jsPath);
+        let jsModules = _.clone(_bootstrapGetJsList()); // TODO:  Doesn't need to be done this way.
 
 
         // Create js modules json
@@ -170,7 +173,7 @@ class BootstrapCompiler {
 
       // Get all scss modules specified in default bootstrap.scss
       // This will give a nicely ordered list of all bootstrap modules
-      let bootstrapDefaultScss = fs.readFileSync(path.join(scssPath, 'bootstrap.scss'));
+      let bootstrapDefaultScss = getAsset(path.join(scssPath, 'bootstrap.scss'));
       let scssModules = [];
       let re = /\@import\s+\"(.+)\"/g;
       let found;
@@ -196,7 +199,7 @@ class BootstrapCompiler {
       if (settings.scss.customVariables) {
         if (!fs.existsSync(path.join(settingsPathDir, bootstrapVariables))) {
           // Generate the custom variables file because it doesn't exist
-          let src = fs.readFileSync(path.join(scssPath, '_variables.scss')).toString();
+          let src = getAsset(path.join(scssPath, '_variables.scss'));
           src = src.substr(Math.max(src.indexOf('\n\n'), 0));
           src = src.replace(/\s*\!default/g, '');
           src = variablesFilesInstruction + src;
@@ -211,12 +214,12 @@ class BootstrapCompiler {
       // Expose mixins if specified
       if (settings.scss.exposeMixins && !fs.exists(path.join(settingsPathDir, bootstrapMixins))) {
         // Generate the mixins file because it doesn't exist
-        let src = fs.readFileSync(path.join(scssPath, '_mixins.scss')).toString();
+        let src = getAsset(path.join(scssPath, '_mixins.scss'));
         src = src.substr(Math.max(src.indexOf('\n\n'), 0));
         src = src.replace(/\@import\s+\"mixins\/(.+)\"\;?/g, (match, mixin) => {
           let fullPath = path.join(scssPath, 'mixins', '_' + mixin + '.scss');
 
-          return fs.readFileSync(fullPath).toString();
+          return getAsset(fullPath);
         });
         src = mixinFilesInstruction + src;
 
@@ -229,17 +232,37 @@ class BootstrapCompiler {
       if (settings.scss.enableFlex) scssPrefix += '$enable-flex: true;\n';
 
 
+      // Handle the imports
+      function handleImports(src) {
+        src = '\n' + src; // Annoying but this justifies my lack of RegExp prowess
+        return src.replace(/\n\s*\@import\s+\"(.+)\"\;?/g, (match, fn) => {
+          if (fn === bootstrapVariables) { // Kind of a hack, but it works for now
+            // Special case, not an asset so just keep it and let import path deal with it
+            return match;
+          }
+
+          let fullPath = path.join(scssPath, path.dirname(fn), '_' + path.basename(fn) + '.scss');
+
+          return handleImports(getAsset(fullPath), true);
+        });
+      }
+
+
+      let handledImports = scssPrefix + handleImports(_.map(scssModules, fn => {
+        return '@import "' + fn + '";';
+      }).join('\n'));
+
+
       // Render the scss into css
-      let rendered = Sass.renderSync({
-        data: scssPrefix + _.map(scssModules, fn => { return '@import "' + fn + '";'; }).join('\n'),
-        includePaths: [scssPath, settingsPathDir]//,
-        //sourceMap: true
-      });
+      let renderedCss = Sass.renderSync({
+        data: handledImports,
+        includePaths: [settingsPathDir]
+      }).css.toString();
 
 
       // Add the newly generated css as a stylesheet
       settingsFile.addStylesheet({
-        data: rendered.css.toString(),
+        data: renderedCss,
         path: path.join('client', 'stylesheets', 'bootstrap', 'bootstrap.generated.css')//,
         //sourceMap: rendered.map.toString()
       });
@@ -249,7 +272,7 @@ class BootstrapCompiler {
       // (3) Handle the js
 
       // Get all js modules
-      let jsModules = fs.readdirSync(jsPath);
+      let jsModules = _.clone(_bootstrapGetJsList()); // TODO:  Doesn't need to be done this way.
 
 
       // Filter the modules to include only those enabled in the bootstrap-settings json
@@ -269,7 +292,7 @@ class BootstrapCompiler {
       // Get source from each bootstrap js file and compile it into one file
       let src = '';
       _.each(jsModules, moduleFn => {
-        src += fs.readFileSync(path.join(jsPath, moduleFn)).toString() + '\n';
+        src += getAsset(path.join(jsPath, moduleFn)) + '\n';
       });
 
 
@@ -301,12 +324,12 @@ class BootstrapCompiler {
       babelOptions.filename = filename;
       babelOptions.sourceFileName = path.join('/', filename);
       babelOptions.sourceMapName = path.join('/', filename + '.map');
-      src = Babel.compile(src, babelOptions).code;
-
+      let compiled = Babel.compile(src, babelOptions);
 
       // Add the javascript
       settingsFile.addJavaScript({
-        data: src,
+        data: compiled.code,
+        map: compiled.map,
         path: filename
       });
     }
