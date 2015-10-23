@@ -79,7 +79,7 @@ class BootstrapCompiler {
 
       // Get the settings data
       let settingsContents = settingsFile.getContentsAsString();
-
+      let settings;
       if (settingsContents.trim()) {
         settings = JSON.parse(settingsContents);
       }
