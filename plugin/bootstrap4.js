@@ -76,13 +76,15 @@ class BootstrapCompiler {
       // Get the settings file dir
       let settingsPathDir = path.dirname(path.join('.', settingsFile.getDisplayPath()));
 
-      // This will throw if settings file is blank/empty or invalid
-      let settings;
-      try {
-        settings = JSON.parse(settingsFile.getContentsAsString());
+
+      // Get the settings data
+      let settingsContents = settingsFile.getContentsAsString();
+
+      if (settingsContents.trim()) {
+        settings = JSON.parse(settingsContents);
       }
-      catch (err) {
-        // Create the settings json file because it doesn't exist
+      else {
+        // Populate the settings json file because it empty
 
         // Load in the template settings file
         let src = getAsset(path.join(defaultsPath, 'bootstrap-settings.default.json'));
@@ -135,6 +137,7 @@ class BootstrapCompiler {
 
         settings = JSON.parse(src);
       }
+
       _.defaults(settings, {
         scss: {},
         javascript: {}
