@@ -20,7 +20,7 @@ Package.registerBuildPlugin({
     'underscore',
     'ecmascript',
     'babel-compiler',
-    'huttonr:bootstrap4-assets' // This package name is also hardcoded in plugin/bootstrap4.js
+    'huttonr:bootstrap4-assets'
   ],
   sources: [
     'plugin/bootstrap4.js'
