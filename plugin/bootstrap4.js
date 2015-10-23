@@ -36,6 +36,7 @@ const mixinFilesInstruction =
 
 
 const getAsset = _bootstrapGetAsset;
+const getJsFilenames = _bootstrapGetJsList;
 
 
 // Register the compiler for the bootstrap-settings json file
@@ -118,7 +119,7 @@ class BootstrapCompiler {
 
 
         // Get all js modules
-        let jsModules = _.clone(_bootstrapGetJsList());
+        let jsModules = _.clone(getJsFilenames());
 
 
         // Create js modules json
@@ -259,7 +260,7 @@ class BootstrapCompiler {
       // (3) Handle the js
 
       // Get all js modules
-      let jsModules = _.clone(_bootstrapGetJsList());
+      let jsModules = _.clone(getJsFilenames());
 
 
       // Filter the modules to include only those enabled in the bootstrap-settings json
