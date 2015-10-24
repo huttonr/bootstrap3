@@ -1,9 +1,9 @@
 
 Package.describe({
-  name: 'huttonr:bootstrap4',
-  summary: 'Modular, customizable Bootstrap 4.',
-  version: '4.0.0_4',
-  git: 'https://github.com/huttonr/bootstrap4',
+  name: 'huttonr:bootstrap3',
+  summary: 'Modular, customizable Bootstrap 3.',
+  version: '3.3.5_1',
+  git: 'https://github.com/huttonr/bootstrap3',
   documentation: 'README.md'
 });
 
@@ -15,17 +15,17 @@ Package.onUse(function(api) {
 });
 
 Package.registerBuildPlugin({
-  name: 'build-bootstrap4',
+  name: 'build-bootstrap3',
   use: [
-    'underscore',
-    'ecmascript',
-    'babel-compiler',
-    'huttonr:bootstrap4-assets'
+    'underscore@1.0.4',
+    'ecmascript@0.1.5',
+    //'babel-compiler@5.8.24_1',
+    'huttonr:bootstrap3-assets@3.3.5_1'
   ],
   sources: [
-    'plugin/bootstrap4.js'
+    'plugin/bootstrap3.js'
   ],
   npmDependencies: {
-    'node-sass': '3.3.3'
+    //'node-sass': '3.3.3'
   }
 });
