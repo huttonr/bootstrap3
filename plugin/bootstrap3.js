@@ -1,23 +1,24 @@
 // npm
-const fs =    Plugin.fs;
-const path =  Plugin.path;
-const Sass =  Npm.require('node-sass');
+const fs =      Plugin.fs;
+const path =    Plugin.path;
+const less =    Npm.require('less');
+const Future =  Npm.require('fibers/future');
 
 
 // Paths and filenames
 const assetsPath =        path.join('assets');
 const defaultsPath =      path.join(assetsPath, 'defaults');
-const scssPath =          path.join(assetsPath, 'bootstrap', 'scss');
-const jsPath =            path.join(assetsPath, 'bootstrap', 'js', 'src');
+const lessPath =          path.join(assetsPath, 'bootstrap', 'less');
+const jsPath =            path.join(assetsPath, 'bootstrap', 'js');
+const fontsUrl =          'packages/huttonr_bootstrap3-assets/assets/bootstrap/fonts/';
 
 const jsLoadFirst = [ // Specifies which js modules should be loaded first due to other js modules depending on them
-  'util.js',
   'tooltip.js'
 ];
 
 const bootstrapSettings =   'bootstrap-settings.json';
-const bootstrapVariables =  '_bootstrap-variables.scss';
-const bootstrapMixins =     '_bootstrap-mixins.scss';
+const bootstrapVariables =  'bootstrap-variables.less';
+const bootstrapMixins =     'bootstrap-mixins.less';
 
 const variablesFilesInstruction =
 `// These are custom bootstrap variables for you to edit.
@@ -29,7 +30,7 @@ const variablesFilesInstruction =
 const mixinFilesInstruction =
 `// Editing these mixins will not edit the mixins used by the core bootstrap modules.
 // They are exposed here for your use and convenience.
-// They can be imported using @import "path/to/${ bootstrapMixins.replace(/^\_(.+)\.scss*/, '$1') }'
+// They can be imported using @import "path/to/${ bootstrapMixins }"
 `;
 
 
@@ -37,6 +38,7 @@ const mixinFilesInstruction =
 
 const getAsset = _bootstrapGetAsset;
 const getJsFilenames = _bootstrapGetJsList;
+
 
 
 // Register the compiler for the bootstrap-settings json file
@@ -91,32 +93,32 @@ class BootstrapCompiler {
 
 
         // Get the default trailing whitespace
-        let scssWhitespace = src.match(/\n(\s*)\/\*SCSS_MODULES\*\//)[1] || '';
+        let lessWhitespace = src.match(/\n(\s*)\/\*LESS_MODULES\*\//)[1] || '';
         let jsWhitespace = src.match(/\n(\s*)\/\*JS_MODULES\*\//)[1] || '';
 
 
-        // Get all scss modules specified in default bootstrap.scss
-        let bootstrapDefaultScss = getAsset(path.join(scssPath, 'bootstrap.scss'));
-        let scssModules = [];
-        let re = /\@import\s+\"(.+)\"\;?/g;
+        // Get all less modules specified in default bootstrap.less
+        let bootstrapDefaultLess = getAsset(path.join(lessPath, 'bootstrap.less'));
+        let lessModules = [];
+        let re = /\@import\s+[\"\'](.+)\.less[\"\']\;?/g;
         let found;
-        while (found = re.exec(bootstrapDefaultScss)) {
-          if (found[1]) scssModules.push(found[1]);
+        while (found = re.exec(bootstrapDefaultLess)) {
+          if (found[1]) lessModules.push(found[1]);
         }
 
 
         // Remove default variables module and mixins module
-        scssModules.splice(scssModules.indexOf('variables'), 1);
-        scssModules.splice(scssModules.indexOf('mixins'), 1);
+        lessModules.splice(lessModules.indexOf('variables'), 1);
+        lessModules.splice(lessModules.indexOf('mixins'), 1);
 
 
         // Sort them alphabetically
-        scssModules.sort();
+        lessModules.sort();
 
 
-        // Create scss modules json
-        let scssJson = _.map(scssModules, function (name) {
-          return scssWhitespace + '"' + name + '": true';
+        // Create less modules json
+        let lessJson = _.map(lessModules, function (name) {
+          return lessWhitespace + '"' + name + '": true';
         }).join(',\n');
 
 
@@ -130,7 +132,7 @@ class BootstrapCompiler {
 
 
         // Insert the json modules into the template settings file
-        src = src.replace(/\n\s*\/\*SCSS_MODULES\*\//, '\n' + scssJson);
+        src = src.replace(/\n\s*\/\*LESS_MODULES\*\//, '\n' + lessJson);
         src = src.replace(/\n\s*\/\*JS_MODULES\*\//, '\n' + jsJson);
 
         fs.writeFileSync(path.join('.', settingsFile.getDisplayPath()), src);
@@ -139,117 +141,116 @@ class BootstrapCompiler {
       }
 
       _.defaults(settings, {
-        scss: {},
+        less: {},
         javascript: {}
       });
-      _.defaults(settings.scss, {
-        enableFlex: false,
+      _.defaults(settings.less, {
         customVariables: false,
         exposeMixins: false,
         modules: {}
       });
       _.defaults(settings.javascript, {
-        namespace: 'Bootstrap',
         modules: {}
       });
-      if (!settings.javascript.namespace ||
-          settings.javascript.namespace === 'false' ||
-          !_.isString(settings.javascript.namespace) ||
-          !/^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(settings.javascript.namespace)) {
-
-        settings.javascript.namespace = false;
-      }
-      else if (settings.javascript.namespace.toLowerCase() === 'global') {
-        settings.javascript.namespace = 'window';
-      }
 
 
 
-      // (2) Handle the scss
 
-      // Get all scss modules specified in default bootstrap.scss
+      // (2) Handle the less
+
+      // Get all less modules specified in default bootstrap.less
       // This will give a nicely ordered list of all bootstrap modules
-      let bootstrapDefaultScss = getAsset(path.join(scssPath, 'bootstrap.scss'));
-      let scssModules = [];
-      let re = /\@import\s+\"(.+)\"/g;
+      let bootstrapDefaultLess = getAsset(path.join(lessPath, 'bootstrap.less'));
+      let lessModules = [];
+      let re = /\@import\s+[\"\'](.+)\.less[\"\']/g;
       let found;
-      while (found = re.exec(bootstrapDefaultScss)) {
-        if (found[1]) scssModules.push(found[1]);
+      while (found = re.exec(bootstrapDefaultLess)) {
+        if (found[1]) lessModules.push(found[1]);
       }
 
 
       // Remove default variables module and mixins module
-      scssModules.splice(scssModules.indexOf('variables'), 1);
-      scssModules.splice(scssModules.indexOf('mixins'), 1);
+      lessModules.splice(lessModules.indexOf('variables'), 1);
+      lessModules.splice(lessModules.indexOf('mixins'), 1);
 
 
       // Filter the modules to include only those enabled in the bootstrap-settings json
-      scssModules = _.filter(scssModules, moduleName => settings.scss.modules[moduleName]);
+      lessModules = _.filter(lessModules, moduleName => settings.less.modules[moduleName]);
 
 
       // Reinsert default variables and mixins modules
-      scssModules.splice(0, 0, 'variables', 'mixins');
+      lessModules.splice(0, 0, 'variables', 'mixins');
 
 
       // Insert custom variables module (after default variables module)
-      if (settings.scss.customVariables) {
+      if (settings.less.customVariables) {
         if (!fs.existsSync(path.join(settingsPathDir, bootstrapVariables))) {
           // Generate the custom variables file because it doesn't exist
-          let src = getAsset(path.join(scssPath, '_variables.scss'));
+          let src = getAsset(path.join(lessPath, 'variables.less'));
           src = src.substr(Math.max(src.indexOf('\n\n'), 0));
-          src = src.replace(/\s*\!default/g, '');
+          src = src.replace(/(?:\n|^|\*\/|\;)\s*\@icon\-font\-.*/g, '// $1'); // Comment out the glyphicon settings
           src = variablesFilesInstruction + src;
 
           fs.writeFileSync(path.join(settingsPathDir, bootstrapVariables), src);
         }
 
-        scssModules.splice(scssModules.indexOf('variables') + 1, 0, bootstrapVariables.replace(/_(.+)\.scss/, '$1'));
+        lessModules.splice(lessModules.indexOf('variables') + 1, 0, bootstrapVariables.replace(/(.+)\.less/, '$1'));
       }
 
 
       // Expose mixins if specified
-      if (settings.scss.exposeMixins && !fs.exists(path.join(settingsPathDir, bootstrapMixins))) {
+      if (settings.less.exposeMixins && !fs.exists(path.join(settingsPathDir, bootstrapMixins))) {
         // Generate the mixins file because it doesn't exist
-        let src = getAsset(path.join(scssPath, '_mixins.scss'));
+        let src = getAsset(path.join(lessPath, 'mixins.less'));
         src = src.substr(Math.max(src.indexOf('\n\n'), 0));
-        src = src.replace(/\@import\s+\"mixins\/(.+)\"\;?/g, (match, mixin) => {
-          let fullPath = path.join(scssPath, 'mixins', '_' + mixin + '.scss');
-
-          return getAsset(fullPath);
-        });
+        src = src.replace(/\@import\s+\"(.+)\"\;?/g, (match, mixin) => getAsset(path.join(lessPath, mixin)));
         src = mixinFilesInstruction + src;
 
         fs.writeFileSync(path.join(settingsPathDir, bootstrapMixins), src);
       }
 
 
-      // Enable flex if specified
-      let scssPrefix = '';
-      if (settings.scss.enableFlex) scssPrefix += '$enable-flex: true;\n';
+      // Build src starting with a bunch of imports
+      let lessSrc = _.map(lessModules, module => `@import "${ module }.less";`).join('\n');
 
 
-      // Render the scss into css using a custom importer
-      let rendered = Sass.renderSync({
-        data: scssPrefix + _.map(scssModules, fn => { return '@import "' + fn + '";'; }).join('\n'),
-        importer: (url, prev, done) => {
-          // I will admit that this regexp could have more possible cases, but this works for the current bootstrap
-          url = url.replace(/(.*)(?:\/|^)(?!.+\/)(.+)/, (match, dir, fn) => path.join(dir, '_' + fn + '.scss'));
-
-          // XXX There is a pitfall here which is that a mixin could possibly import something in the future,
-          //     in which case it would not know to look in the mixin folder, but would look in the scss folder
-          //     however this is not currently the case so we're not going to worry about it yet.
-
-          // So let's try two potential locations
+      // Cute little recursive function to explode all of the less imports
+      function resolveLessImports(src, currentPath = '.') {
+        // Find all of the imports
+        return src.replace(/(?:\n|^|\*\/|\;)\s*\@import\s+[\"\'](.+)[\"\']\s*\;\s*?/g, (match, fn) => {
+          let res;
           try {
-            // First the bootstrap scss location (asset)
-            return { contents: getAsset(path.join(scssPath, url)) };
+            // First try to get it from the assets
+            res = getAsset(path.join(lessPath, currentPath, fn));
           }
           catch (err) {
-            // Second the directory the bootstrap settings file is in (in the actual meteor project)
-            return { file: path.join(settingsPathDir, url) };
+            // Getting from the assets failed so it should just be the custom variables file in the settings json dir
+            res = fs.readFileSync(path.join(settingsPathDir, fn)).toString();
           }
-        }
-      });
+
+          // Recursively explode the imports in the imported file keeping the path in mind (just in case)
+          return resolveLessImports(res, path.join(currentPath, path.dirname(fn)));
+        });
+      }
+
+
+      // Actually resolve (explode) the imports now
+      lessSrc = resolveLessImports(lessSrc);
+
+
+      // Fix the glyphicon variables
+      lessSrc = lessSrc.replace(/((?:\n|^|\*\/|\;)\s*\@icon\-font\-path\s*\:\s*)(?:.+)/g,
+                                `$1"${ fontsUrl }";`)
+                       .replace(/((?:\n|^|\*\/|\;)\s*\@icon\-font\-name\s*\:\s*)(?:.+)/g,
+                                '$1"glyphicons-halflings-regular";')
+                       .replace(/((?:\n|^|\*\/|\;)\s*\@icon\-font\-svg\-id\s*\:\s*)(?:.+)/g,
+                                '$1"glyphicons_halflingsregular";');
+
+
+      // Render the less
+      const f = new Future();
+      less.render(lessSrc, f.resolver());
+      let rendered = f.wait();
 
 
       // Add the newly generated css as a stylesheet
@@ -257,6 +258,7 @@ class BootstrapCompiler {
         data: rendered.css.toString(),
         path: path.join('client', 'stylesheets', 'bootstrap', 'bootstrap.generated.css')
       });
+
 
 
 
@@ -287,42 +289,10 @@ class BootstrapCompiler {
       });
 
 
-      // Kill the imports
-      src = src.replace(/import\s+(?:\S+)\s+from\s+\'.+\'/g, '');
-
-
-      // Build the exports
-      if (settings.javascript.namespace !== false) {
-        src = `if (typeof window. ${ settings.javascript.namespace } === "undefined")
-                window. ${ settings.javascript.namespace } = {};
-                ${ src }`;
-
-        src = src.replace(
-          /export\s+default\s+(\S+)/g,
-          `window.${ settings.javascript.namespace }.$1 = $1`
-        );
-      }
-
-      src = `if (Meteor.isClient) {
-              ${ src }
-            }`;
-
-
-      // Compile the ES6
-      let babelOptions = Babel.getDefaultOptions();
-      let filename = path.join('client', 'lib', 'bootstrap', 'bootstrap.generated.js');
-      babelOptions.sourceMap = true;
-      babelOptions.filename = filename;
-      babelOptions.sourceFileName = path.join('/', filename);
-      babelOptions.sourceMapName = path.join('/', filename + '.map');
-      let compiled = Babel.compile(src, babelOptions);
-
-
       // Add the javascript
       settingsFile.addJavaScript({
-        data: compiled.code,
-        map: compiled.map,
-        path: filename
+        data: src,
+        path: path.join('client', 'lib', 'bootstrap', 'bootstrap.generated.js')
       });
     }
   }
