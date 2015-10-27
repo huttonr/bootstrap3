@@ -45,7 +45,7 @@ const getJsFilenames = _bootstrapGetJsList
 // Register the compiler for the bootstrap-settings json file
 Plugin.registerCompiler({
   extensions: [],
-  filenames: [bootstrapSettings, bootstrapVariables, bootstrapMixins]
+  filenames: [bootstrapSettings/*, bootstrapVariables, bootstrapMixins*/]
 }, () => new BootstrapCompiler)
 
 
@@ -265,8 +265,6 @@ class BootstrapCompiler {
         if (index > -1)
           jsModules.unshift(jsModules.splice(index, 1)[0])
       }
-
-      console.log(jsModules)
 
 
       // Get source from each bootstrap js file and compile it into one file
