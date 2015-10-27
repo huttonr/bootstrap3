@@ -66,7 +66,6 @@ class BootstrapCompiler {
       }
     }
 
-
     if (settingsFile) {
       // (1) Get the bootstrap-settings json
 
@@ -260,12 +259,14 @@ class BootstrapCompiler {
 
 
       // Push 'load first' modules to top of list
-      for (let fn of jsLoadFirst.splice(0).reverse()) {
+      for (let fn of jsLoadFirst.slice().reverse()) {
         let index = jsModules.indexOf(fn)
 
         if (index > -1)
           jsModules.unshift(jsModules.splice(index, 1)[0])
       }
+
+      console.log(jsModules)
 
 
       // Get source from each bootstrap js file and compile it into one file
