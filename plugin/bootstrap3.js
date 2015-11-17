@@ -86,8 +86,7 @@ class BootstrapCompiler {
       let settings
       if (settingsContents.trim()) {
         settings = JSON.parse(settingsContents)
-      }
-      else {
+      } else {
         // Populate the settings json file because it empty
 
         // Load in the template settings file
@@ -181,7 +180,7 @@ class BootstrapCompiler {
           let src = getAsset(path.join(lessPath, 'variables.less'))
           src = src.substr(Math.max(src.indexOf('\n\n'), 0)) // Cut the top commentary off
                    .replace(/((?:\n|^|\*\/|\;)\s*)(\@icon\-font\-\S+)\:.*/g,
-                            "$1// '$2' automatically set by Bootstrap package."); // Comment out the glyphicon settings
+                            "$1// '$2' automatically set by Bootstrap package.") // Comment out the glyphicon settings
           src = variablesFilesInstruction + src
 
           fs.writeFileSync(path.join(settingsPathDir, bootstrapVariables), src)
@@ -286,19 +285,18 @@ class BootstrapCompiler {
 
 
 function resolveFilePath(filePath) {
-	const match = filePath.match(/{(.*)}\/(.*)$/);
-	if (!match)
-		return filePath;
+  const match = filePath.match(/{(.*)}\/(.*)$/)
+  
+  if (!match) return filePath
+  if (match[1] === '') return match[2]
 
-	if (match[1] === '') return match[2];
+  let paths = []
 
-	var paths = [];
+  paths[1] = paths[0] = `packages/${ match[1].replace(':', '_') }/${ match[2] }`
+  if (!fs.existsSync(paths[0]))
+    paths[2] = paths[0] = `packages/${ match[1].replace(/.*:/, '') }/${ match[2] }`
+  if (!fs.existsSync(paths[0]))
+    throw new Error(`Path does not exist: ${ filePath }\nTested path 1: ${ paths[1] }\nTested path 2: ${ paths[2] }`)
 
-	paths[1] = paths[0] = `packages/${match[1].replace(':', '_')}/${match[2]}`;
-	if (!fs.existsSync(paths[0]))
-		paths[2] = paths[0] = 'packages/' + match[1].replace(/.*:/, '') + '/' + match[2];
-	if (!fs.existsSync(paths[0]))
-		throw new Error(`Path not exist: ${filePath}\nTested path 1: ${paths[1]}\nTest path 2: ${paths[2]}`);
-
-	return paths[0];
+  return paths[0]
 }
