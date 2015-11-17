@@ -77,7 +77,8 @@ class BootstrapCompiler {
 
 
       // Get the settings file dir
-      const settingsPathDir = path.dirname(path.join('.', settingsFile.getDisplayPath()))
+      const settingsFilePath = path.join('.', resolveFilePath(`{${settingsFile.getPackageName()||''}}/${settingsFile.getPathInPackage()}`));
+      const settingsPathDir = path.dirname(settingsFilePath);
 
 
       // Get the settings data
@@ -130,7 +131,7 @@ class BootstrapCompiler {
         src = src.replace(/\n\s*\/\*LESS_MODULES\*\//, '\n' + lessJson)
                  .replace(/\n\s*\/\*JS_MODULES\*\//, '\n' + jsJson)
 
-        fs.writeFileSync(path.join('.', settingsFile.getDisplayPath()), src)
+        fs.writeFileSync(settingsFilePath, src)
 
         settings = JSON.parse(src)
       }
@@ -281,4 +282,23 @@ class BootstrapCompiler {
       })
     }
   }
+}
+
+
+function resolveFilePath(filePath) {
+	const match = filePath.match(/{(.*)}\/(.*)$/);
+	if (!match)
+		return filePath;
+
+	if (match[1] === '') return match[2];
+
+	var paths = [];
+
+	paths[1] = paths[0] = `packages/${match[1].replace(':', '_')}/${match[2]}`;
+	if (!fs.existsSync(paths[0]))
+		paths[2] = paths[0] = 'packages/' + match[1].replace(/.*:/, '') + '/' + match[2];
+	if (!fs.existsSync(paths[0]))
+		throw new Error(`Path not exist: ${filePath}\nTested path 1: ${paths[1]}\nTest path 2: ${paths[2]}`);
+
+	return paths[0];
 }
