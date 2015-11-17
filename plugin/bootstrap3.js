@@ -57,7 +57,7 @@ class BootstrapCompiler {
 
     // Loop through and find the settings file
     for (let file of filesFound) {
-      let fn = path.basename(file.getDisplayPath())
+      let fn = path.basename(path.join('.', file.getDisplayPath()))
       if (fn === bootstrapSettings) {
         if (settingsFile)
           throw new Error('You cannot have more than one ' + bootstrapSettings + ' in your Meteor project.')
