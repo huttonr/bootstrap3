@@ -146,7 +146,7 @@ class BootstrapCompiler {
         settings = JSON.parse(src)
       }
 
-      function def(obj, name, val) { obj[name] = obj[name] || val }
+      function def(obj, name, val) { if (obj[name] === undefined) obj[name] = val }
 
       def(settings, 'less', {})
       def(settings, 'javascript', {})
