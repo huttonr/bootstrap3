@@ -10,7 +10,9 @@ The package will automatically populate the file if it is empty.
 ####`less`
 `customVariables` **Boolean** (default: *false*)  Enable this to expose a custom bootstrap variables file you can edit.  
 `exposeMixins` **Boolean** (default: *false*)  Enable this to expose an importable less file with the bootstrap mixins for your use.  
+`compile` **Boolean** (default: *true*)  Disable this to expose the raw bootstrap less and leave it to the less package to compile.  
 `modules` **Object**  Enable or disable specific bootstrap less modules. *(The listed order of these are unimportant)*
 
 ####`javascript`
+`expose` **Boolean** (default: *false*)  Enable to expose the raw bootstrap javascript.  
 `modules` **Object**  Enable or disable specific bootstrap js modules. *(The listed order of these are unimportant)*
