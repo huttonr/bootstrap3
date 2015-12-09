@@ -274,6 +274,12 @@ class BootstrapCompiler {
       }
 
 
+      // Ensure bootstrap js only runs on the client
+      src =  `if (Meteor.isClient) {
+                ${ src }
+              }`
+
+
       // Add the javascript
       settingsFile.addJavaScript({
         data: src,
@@ -286,7 +292,7 @@ class BootstrapCompiler {
 
 function resolveFilePath(filePath) {
   const match = filePath.match(/{(.*)}\/(.*)$/)
-  
+
   if (!match) return filePath
   if (match[1] === '') return match[2]
 
