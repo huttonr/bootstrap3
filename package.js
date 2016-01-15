@@ -11,7 +11,7 @@ Package.onUse(function(api) {
   api.versionsFrom('1.2.1');
 
   api.use('isobuild:compiler-plugin@1.0.0');
-  api.use('huttonr:bootstrap3-assets@3.3.6');
+  api.use('huttonr:bootstrap3-assets@3.3.6_2');
   api.use('less'); // Currently necessary, see https://github.com/huttonr/bootstrap3/issues/2
 
   api.addFiles('check-settings.js', 'client');
@@ -20,8 +20,8 @@ Package.onUse(function(api) {
 Package.registerBuildPlugin({
   name: 'build-bootstrap3',
   use: [
-    'ecmascript',
-    'huttonr:bootstrap3-assets@3.3.6'
+    'ecmascript@0.1.6',
+    'huttonr:bootstrap3-assets@3.3.6_2'
   ],
   sources: [
     'plugin/bootstrap3.js'

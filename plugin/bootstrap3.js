@@ -82,7 +82,7 @@ class BootstrapCompiler {
 
       // Flag the settings file as being present so a warning isn't displayed later
       settingsFile.addJavaScript({
-        data: 'this._bootstrapSettingsFileLoaded = true;\n',
+        data: 'Meteor._bootstrapSettingsFileLoaded = true;\n',
         path: path.join('client', 'lib', 'settings-file-checked.generated.js')
       })
 
