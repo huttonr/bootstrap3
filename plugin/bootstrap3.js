@@ -28,6 +28,7 @@ const variablesFileInstruction =
 // These simply override any default bootstrap variables.
 // This means that you may delete anything in this file
 // and the default bootstrap values will be used instead.
+
 `
 
 const mixinFileInstruction =
@@ -47,7 +48,7 @@ const rawFileInstruction =
 
 
 
-
+// Asset functions
 const getAsset = _bootstrapGetAsset
 const getJsFilenames = _bootstrapGetJsList
 
@@ -83,7 +84,8 @@ class BootstrapCompiler {
       // Flag the settings file as being present so a warning isn't displayed later
       settingsFile.addJavaScript({
         data: 'Meteor._bootstrapSettingsFileLoaded = true;\n',
-        path: path.join('client', 'lib', 'settings-file-checked.generated.js')
+        path: path.join('client', 'lib', 'settings-file-checked.generated.js'),
+        bare: true
       })
 
 
@@ -92,14 +94,8 @@ class BootstrapCompiler {
       const settingsPathDir = path.dirname(settingsFilePath)
 
 
-      // Get the settings data
-      const settingsContents = settingsFile.getContentsAsString()
-      let settings
-      if (settingsContents.trim()) {
-        settings = JSON.parse(settingsContents)
-      } else {
-        // Populate the settings json file because it empty
-
+      // Function to build the default settings json
+      function buildSettingsFileJson() {
         // Load in the template settings file
         let src = getAsset(path.join(defaultsPath, 'bootstrap-settings.default.json'))
 
@@ -141,15 +137,41 @@ class BootstrapCompiler {
         src = src.replace(/\n\s*\/\*LESS_MODULES\*\//, '\n' + lessJson)
                  .replace(/\n\s*\/\*JS_MODULES\*\//, '\n' + jsJson)
 
+        return src
+      }
+
+      // Get the settings data
+      const settingsContents = settingsFile.getContentsAsString()
+      let settings
+      if (settingsContents.trim()) {
+        settings = JSON.parse(settingsContents)
+      } else {
+        // Populate the settings json file because it empty
+        let src = buildSettingsFileJson()
+
         fs.writeFileSync(settingsFilePath, src)
 
         settings = JSON.parse(src)
       }
 
+
+      // Detect huttonr:bootstrap4 downgrade
+      if (settings.scss) {
+        // Overwrite the old settings json file with the default one
+        let src = buildSettingsFileJson()
+
+        fs.writeFileSync(settingsFilePath, src)
+
+        settings = JSON.parse(src)
+      }
+
+
+      // Settings defaults
       function def(obj, name, val) { if (obj[name] === undefined) obj[name] = val }
 
       def(settings, 'less', {})
       def(settings, 'javascript', {})
+      def(settings, 'version', 0)
       def(settings.less, 'customVariables', false)
       def(settings.less, 'exposeMixins', false)
       def(settings.less, 'compile', true)
@@ -179,7 +201,7 @@ class BootstrapCompiler {
 
 
       // Filter the modules to include only those enabled in the bootstrap-settings json
-      lessModules = lessModules.filter(moduleName => !!settings.less.modules[moduleName])
+      lessModules = lessModules.filter(moduleName => settings.less.modules[moduleName])
 
 
       // Reinsert default variables and mixins modules
@@ -277,7 +299,7 @@ class BootstrapCompiler {
 
 
       // Filter the modules to include only those enabled in the bootstrap-settings json
-      jsModules = jsModules.filter(moduleName => !!settings.javascript.modules[moduleName.match(/(.*)\.js/i)[1]])
+      jsModules = jsModules.filter(moduleName => settings.javascript.modules[moduleName.match(/(.*)\.js/i)[1]])
 
 
       // Push 'load first' modules to top of list
@@ -296,7 +318,7 @@ class BootstrapCompiler {
       }
 
 
-      // Add guard to ensure bootstrap js only runs on the client (any pretty it up in case it gets exposed)
+      // Add guard to ensure bootstrap js only runs on the client (and pretty it up in case it gets exposed)
       src =  `if (Meteor.isClient) { \
                 \n  ${ src.replace(/\n/g, '\n  ') } \
               \n}\n`

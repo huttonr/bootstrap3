@@ -6,6 +6,7 @@ In your Meteor project, create a file named `bootstrap-settings.json` and place 
 
 The package will automatically populate the file if it is empty.
 
+
 ### bootstrap-settings.json
 #### `less`
 `customVariables` **Boolean** (default: *false*)  Enable this to expose a custom bootstrap variables file you can edit.  
