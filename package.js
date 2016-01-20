@@ -2,7 +2,7 @@
 Package.describe({
   name: 'huttonr:bootstrap3',
   summary: 'Modular, customizable Bootstrap 3.',
-  version: '3.3.6_5',
+  version: '3.3.6_6',
   git: 'https://github.com/huttonr/bootstrap3',
   documentation: 'README.md'
 });
@@ -13,6 +13,7 @@ Package.onUse(function(api) {
   api.use('isobuild:compiler-plugin@1.0.0');
   api.use('huttonr:bootstrap3-assets@3.3.6_2');
   api.use('less'); // Currently necessary, see https://github.com/huttonr/bootstrap3/issues/2
+  api.use('ecmascript'); // Currently necessary
 
   api.addFiles('check-settings.js', 'client');
 });
