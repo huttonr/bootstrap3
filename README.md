@@ -12,7 +12,7 @@ This means any folder in your Meteor project that is loaded on the client only. 
 Then go to your console and type `meteor run` and the huttonr:bootstrap3 package will automatically fill your `bootstrap-settings.json` file with all of the default settings.  At this point you will be able to use bootstrap classes in your html files such as `<div class="container jumbotron">Hello World</div>` or `<span class="glyphicon glyphicon-heart"></span>`.
 
 ### Custom settings
-The settings json file is automatically populated with the default settings, however each of these can be changed and individual modules can be turned on and off.  The default `bootstrap-settings.json` file has the following structure.
+The settings json file is automatically populated with the default settings, however each of these can be changed and individual modules can be turned on and off.  The default `bootstrap-settings.json` file has the following structure:
 
 ```json
 {
