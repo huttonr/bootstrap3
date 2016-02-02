@@ -65,7 +65,7 @@ The settings json file is automatically populated with the default settings, how
   },
 
   "javascript": {
-    "expose": true,
+    "expose": false,
 
     "modules": {
       "affix": true,
