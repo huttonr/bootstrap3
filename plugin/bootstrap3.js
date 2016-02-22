@@ -18,7 +18,7 @@ const jsLoadFirst = [ // Specifies which js modules should be loaded first due t
 
 const bootstrapSettings =   'bootstrap-settings.json'
 const bootstrapVariables =  'bootstrap-variables.less'
-const bootstrapRaw =        'bootstrap-raw.less'
+const bootstrapRaw =        'bootstrap-raw.import.less'
 const bootstrapMixins =     'bootstrap-mixins.less'
 const bootstrapJs =         'bootstrap.js'
 
