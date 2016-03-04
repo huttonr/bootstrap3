@@ -18,7 +18,7 @@ const jsLoadFirst = [ // Specifies which js modules should be loaded first due t
 
 const bootstrapSettings =   'bootstrap-settings.json'
 const bootstrapVariables =  'bootstrap-variables.less'
-const bootstrapRaw =        'bootstrap-raw.less'
+const bootstrapRaw =        'bootstrap-raw.import.less'
 const bootstrapMixins =     'bootstrap-mixins.less'
 const bootstrapJs =         'bootstrap.js'
 
@@ -80,13 +80,6 @@ class BootstrapCompiler {
 
     if (settingsFile) {
       // (1) Get the bootstrap-settings json
-
-      // Flag the settings file as being present so a warning isn't displayed later
-      settingsFile.addJavaScript({
-        data: 'Meteor._bootstrapSettingsFileLoaded = true;\n',
-        path: path.join('client', 'lib', 'settings-file-checked.generated.js'),
-        bare: true
-      })
 
 
       // Get the settings file dir
@@ -281,6 +274,7 @@ class BootstrapCompiler {
           data: rendered.css.toString(),
           path: path.join('client', 'stylesheets', 'bootstrap', 'bootstrap.generated.css')
         })
+
       } else {
         // Add some explanatory data and warnings
         lessSrc = `${ rawFileInstruction }\n${ lessSrc }`
@@ -293,6 +287,10 @@ class BootstrapCompiler {
 
 
       // (3) Handle the js
+
+
+      // Set up a variable to store all the js that will be added with .addJavaScript
+      let combinedJs = 'Meteor._bootstrapSettingsFileLoaded = true;\n'
 
       // Get all js modules
       let jsModules = getJsFilenames()
@@ -332,12 +330,16 @@ class BootstrapCompiler {
         // Expose the javascript into a file for the user
         fs.writeFileSync(path.join(settingsPathDir, bootstrapJs), src)
       } else {
-        // Add the javascript directly
-        settingsFile.addJavaScript({
-          data: src,
-          path: path.join('client', 'lib', 'bootstrap', 'bootstrap.generated.js')
-        })
+        // Add the js to the chunk that will be added
+        combinedJs += src
       }
+
+
+      // Add the js all in one file as multiple calls to .addJavaScript is currently unsupported
+      settingsFile.addJavaScript({
+        data: combinedJs,
+        path: path.join('client', 'lib', 'bootstrap', 'bootstrap.generated.js')
+      })
     }
   }
 }
