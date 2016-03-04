@@ -7,7 +7,7 @@ In your Meteor project, create an empty file named `bootstrap-settings.json` and
 The package will automatically populate the file if it is empty.
 
 ### For those newer to Meteor
-This means any folder in your Meteor project that is loaded on the client only.  Per the [Meteor documentation on file structure](http://docs.meteor.com/#/full/structuringyourapp) that would be any folder named `client`.  The usual place to put files relating to *style* (such as Bootstrap) is `client/stylesheets`.  All you have to do is make an empty file named `bootstrap-settings.json` and place it in `client/stylesheets` or some similar folder (you might have to make the folders).
+Client folder means any folder in your Meteor project that is loaded on the client only.  Per the [Meteor documentation on file structure](http://docs.meteor.com/#/full/structuringyourapp) that would be any folder named `client`.  The usual place to put files relating to *style* (such as Bootstrap) is `client/stylesheets`.  All you have to do is make an empty file named `bootstrap-settings.json` and place it in `client/stylesheets` or some similar folder (you might have to make the folders).
 
 Then go to your console and type `meteor run` and the huttonr:bootstrap3 package will automatically fill your `bootstrap-settings.json` file with all of the default settings.  At this point you will be able to use bootstrap classes in your html files such as `<div class="container jumbotron">Hello World</div>` or `<span class="glyphicon glyphicon-heart"></span>`.
 
@@ -96,3 +96,27 @@ These settings perform the following duties:
 #### `javascript`
 `expose` **Boolean** (default: *false*)  Enable to expose the raw bootstrap javascript.  
 `modules` **Object**  Enable or disable specific bootstrap js modules. *(The listed order of these is unimportant.)*
+
+
+### Using custom variables or mixins
+
+Custom variables are made easy with this package.  First change `customVariables` in the settings file to `true` which will expose the variables file for you to edit.  You will need to run your meteor project (if it's not already running) and you will see a file named `bootstrap-variables.less`.  You can change anything in this file.  You can also delete any portion of it that you do not wish to change from the default value.  These variables simply override the default settings so it's safe to delete anything you aren't using.
+
+You can also use this custom variables less file in your own less code if you would like by importing it:
+
+```less
+// my-custom.less
+@import "bootstrap-variables.less";
+
+/* Custom less using Bootstrap variables here */
+```
+
+The exact same goes for mixins.  **Mixins are currently not editable.**  They are exposed solely for your use in construction:
+
+```less
+// my-custom.less
+@import "bootstrap-variables.less";
+@import "bootstrap-mixins.less";
+
+/* Custom less using Bootstrap mixins and variables here */
+```
