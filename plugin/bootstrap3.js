@@ -203,7 +203,7 @@ class BootstrapCompiler {
 
       // Insert custom variables module (after default variables module)
       if (settings.less.customVariables) {
-        if (!fs.existsSync(path.join(settingsPathDir, bootstrapVariables))) {
+        if (!fileExists(path.join(settingsPathDir, bootstrapVariables))) {
           // Generate the custom variables file because it doesn't exist
           let src = getAsset(path.join(lessPath, 'variables.less'))
           src = src.substr(Math.max(src.indexOf('\n\n'), 0)) // Cut the top commentary off
@@ -219,7 +219,7 @@ class BootstrapCompiler {
 
 
       // Expose mixins if specified
-      if (settings.less.exposeMixins && !fs.exists(path.join(settingsPathDir, bootstrapMixins))) {
+      if (settings.less.exposeMixins && !fileExists(path.join(settingsPathDir, bootstrapMixins))) {
         // Generate the mixins file because it doesn't exist
         let src = getAsset(path.join(lessPath, 'mixins.less'))
         src = src.substr(Math.max(src.indexOf('\n\n'), 0))  // Cut the top commentary off
@@ -354,10 +354,35 @@ function resolveFilePath(filePath) {
   let paths = []
 
   paths[1] = paths[0] = `packages/${ match[1].replace(':', '_') }/${ match[2] }`
-  if (!fs.existsSync(paths[0]))
+  if (!fileExists(paths[0]))
     paths[2] = paths[0] = `packages/${ match[1].replace(/.*:/, '') }/${ match[2] }`
-  if (!fs.existsSync(paths[0]))
+  if (!fileExists(paths[0]))
     throw new Error(`Path does not exist: ${ filePath }\nTested path 1: ${ paths[1] }\nTested path 2: ${ paths[2] }`)
 
   return paths[0]
+}
+
+
+function fileExists(filePath) {
+  if (fs.accessSync) {
+    try {
+      fs.accessSync(filePath)
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+
+  if (fs.existsSync) {
+    return fs.existsSync(filePath)
+  }
+
+  if (fs.openSync) {
+    try {
+      fs.close(fs.openSync(filePath, 'r'))
+      return true
+    } catch (err) {
+      return false
+    }
+  }
 }
