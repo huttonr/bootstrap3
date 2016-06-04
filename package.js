@@ -2,7 +2,7 @@
 Package.describe({
   name: 'huttonr:bootstrap3',
   summary: 'Modular, customizable Bootstrap 3.',
-  version: '3.3.6_11',
+  version: '3.3.6_12',
   git: 'https://github.com/huttonr/bootstrap3',
   documentation: 'README.md'
 });

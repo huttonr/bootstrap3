@@ -1,6 +1,6 @@
 // npm
-const fs =      Plugin.fs
-const path =    Plugin.path
+const fs =      Npm.require('fs')
+const path =    Npm.require('path')
 const less =    Npm.require('less')
 const Future =  Npm.require('fibers/future')
 
