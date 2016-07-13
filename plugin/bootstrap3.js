@@ -10,7 +10,7 @@ const assetsPath =        path.join('assets')
 const defaultsPath =      path.join(assetsPath, 'defaults')
 const lessPath =          path.join(assetsPath, 'bootstrap', 'less')
 const jsPath =            path.join(assetsPath, 'bootstrap', 'js')
-const fontsUrl =          'packages/huttonr_bootstrap3-assets/assets/bootstrap/fonts/'
+const fontsUrl =          '/packages/huttonr_bootstrap3-assets/assets/bootstrap/fonts/'
 
 const jsLoadFirst = [ // Specifies which js modules should be loaded first due to other js modules depending on them
   'tooltip.js'
