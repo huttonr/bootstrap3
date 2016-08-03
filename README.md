@@ -2,9 +2,14 @@
 Modular, configurable, customizable.
 
 ## How to use
-In your Meteor project, create an empty file named `bootstrap-settings.json` and place it in any client folder.
 
-The package will automatically populate the file if it is empty.
+1. In your Meteor project, create an empty file named `bootstrap-settings.json` and place it in any client folder.
+
+2. Install package
+
+        meteor add huttonr:bootstrap3
+  
+  The package will automatically populate the `bootstrap-settings.json` file if it is empty.
 
 ### For those newer to Meteor
 Client folder means any folder in your Meteor project that is loaded on the client only.  Per the [Meteor documentation on file structure](http://docs.meteor.com/#/full/structuringyourapp) that would be any folder named `client`.  The usual place to put files relating to *style* (such as Bootstrap) is `client/stylesheets`.  All you have to do is make an empty file named `bootstrap-settings.json` and place it in `client/stylesheets` or some similar folder (you might have to make the folders).
